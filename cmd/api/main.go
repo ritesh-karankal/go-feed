@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	cfg := config {
+	cfg := config{
 		addr: ":8080",
 	}
 
@@ -14,6 +14,6 @@ func main() {
 	}
 
 	mux := app.mount()
-	
+
 	log.Fatal(app.run(mux))
 }
