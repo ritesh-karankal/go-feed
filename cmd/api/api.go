@@ -10,17 +10,27 @@ import (
 
 type application struct {
 	config config
+	store  store.Storage
+
 }
 
 type config struct {
 	addr string
+	db   dbConfig
+}
+
+type dbConfig struct {
+	addr         string
+	maxOpenConns int
+	maxIdleConns int
+	maxIdleTime  string
 }
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.ClientIPFromRemoteAddr) 
+	r.Use(middleware.ClientIPFromRemoteAddr)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -28,7 +38,7 @@ func (app *application) mount() http.Handler {
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
-	
+
 	r.Get("/v1/health", app.healthCheckHandler)
 
 	r.Route("/v1", func(r chi.Router) {
