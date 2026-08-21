@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Storage struct {
