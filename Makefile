@@ -1,4 +1,3 @@
-include .envrc
 MIGRATIONS_PATH = ./cmd/migrate/migrations
 
 .PHONY: migrate-create
@@ -15,4 +14,4 @@ migrate-down:
 
 .PHONY: seed
 seed:
-	@go run cmd/migrate/seed/main.go
+	@go run cmd/migrate/migrations/seed/main.go
