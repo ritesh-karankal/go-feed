@@ -1,14 +1,16 @@
 package store
 
 import (
+	"time"
 	"context"
 	"database/sql"
 	"errors"
 )
 
 var (
-	ErrNotFound     = errors.New("resource not found")
-	ErrEditConflict = errors.New("edit conflict")
+	ErrNotFound          = errors.New("resource not found")
+	ErrEditConflict      = errors.New("edit conflict")
+	QueryTimeoutDuration = time.Second * 5
 )
 type Storage struct {
 	Posts interface {
