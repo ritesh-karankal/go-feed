@@ -130,7 +130,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Handle optimistic locking conflicts separately from unexpected server errors.
-	// A 409 Conflict tells the client that the post was modified by another request.
+	// A Conflict tells the client that the post was modified by another request.
 	if err := app.store.Posts.Update(r.Context(), post); err != nil {
 		switch {
 		case errors.Is(err, store.ErrEditConflict):
