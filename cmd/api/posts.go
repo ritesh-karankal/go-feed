@@ -19,8 +19,8 @@ type CreatePostPayload struct {
 }
 
 type updatePostPayload struct {
-	Title   *string  `json:"title" validate:"omitempty,max=100"`
-	Content *string  `json:"content" validate:"omitempty,max=1000"`
+	Title   *string   `json:"title" validate:"omitempty,max=100"`
+	Content *string   `json:"content" validate:"omitempty,max=1000"`
 	Tags    *[]string `json:"tags"`
 }
 
@@ -129,8 +129,22 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		post.Tags = *payload.Tags
 	}
 
+	// Handle optimistic locking conflicts separately from unexpected server errors.
+	// A 409 Conflict tells the client that the post was modified by another request.
 	if err := app.store.Posts.Update(r.Context(), post); err != nil {
-		app.badRequestResponse(w, r, err)
+		switch {
+		case errors.Is(err, store.ErrEditConflict):
+			if err := writeJSONError(
+				w,
+				http.StatusConflict,
+				"edit conflict, post has been modified by another request",
+			); err != nil {
+				app.internalServerError(w, r, err)
+			}
+		default:
+			app.internalServerError(w, r, err)
+		}
+
 		return
 	}
 
@@ -172,3 +186,4 @@ func getPostFromCtx(r *http.Request) *store.Post {
 	post, _ := r.Context().Value(postCtx).(*store.Post)
 	return post
 }
+

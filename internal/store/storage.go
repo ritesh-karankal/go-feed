@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("resource not found")
+	ErrNotFound     = errors.New("resource not found")
+	ErrEditConflict = errors.New("edit conflict")
 )
 type Storage struct {
 	Posts interface {
@@ -21,14 +22,14 @@ type Storage struct {
 	}
 
 	Comments interface {
-		GetByPostID(context.Context, int64) ([]Comment, error) 
+		GetByPostID(context.Context, int64) ([]Comment, error)
 	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		Posts: &PostStore{db},
-		Users: &UserStore{db},
+		Posts:    &PostStore{db},
+		Users:    &UserStore{db},
 		Comments: &CommentStore{db},
 	}
 }
