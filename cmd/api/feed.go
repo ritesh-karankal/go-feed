@@ -4,10 +4,10 @@ import (
 	"net/http"
 )
 
-func (app *application) gerUserFeedHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	feed, err := app.store.Posts.GetUserFeed(ctx, int64(42))
+	feed, err := app.store.Posts.GetUserFeed(ctx, int64(2))
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return

@@ -17,23 +17,19 @@ type Post struct {
 	UpdatedAt string    `json:"updated_at"`
 	Version   int       `json:"version"`
 	Comments  []Comment `json:"comments"`
-}
-
-type PostsWithMetadata struct{
-	Post 
-	CommentCount int `json:"comments_count`
+	User      User      `json:"user"`
 }
 
 type PostWithMetadata struct {
 	Post
-	CommentsCount int `json:"comments_count"`
+	CommentsCount int `json:"comments_count`
 }
 
 type PostStore struct {
 	db *sql.DB
 }
 
-func (s *PostStore) GetUserFeed(context.Context, int64) ([]PostWithMetadata, error){
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
 	query := `
 	SELECT 
 			p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags,
@@ -65,6 +61,7 @@ func (s *PostStore) GetUserFeed(context.Context, int64) ([]PostWithMetadata, err
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
+			&post.Title,
 			&post.Content,
 			&post.CreatedAt,
 			&post.Version,
@@ -75,10 +72,15 @@ func (s *PostStore) GetUserFeed(context.Context, int64) ([]PostWithMetadata, err
 		if err != nil {
 			return nil, err
 		}
+
+		feed = append(feed, post)
 	}
 
-	return nil, err
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
+	return feed, nil
 }
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
