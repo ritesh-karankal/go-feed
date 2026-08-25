@@ -1,75 +1,32 @@
-```markdown
-## API Testing with cURL
+# API Testing with cURL
 
-### Base URL
+## Base URL
 
 ```text
 http://localhost:3000
 ```
 
-## 1. Create a Post
+## Posts
 
-Create a new post using `POST /v1/posts`.
+### Create a post
 
 ```bash
-curl -i -X POST http://localhost:3000/v1/posts \
+curl -X POST http://localhost:3000/v1/posts \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "my second post",
-    "content": "This is my post for my account.",
+    "title": "My second post",
+    "content": "This is my post.",
     "tags": ["go", "backend", "postgres"]
   }'
 ```
 
-### Example Response
-
-```json
-{
-  "id": 2,
-  "content": "This is my post for my account.",
-  "title": "my second post",
-  "user_id": 1,
-  "tags": ["go", "backend", "postgres"],
-  "created_at": "2026-08-24T08:38:07Z",
-  "updated_at": "2026-08-24T08:38:07Z",
-  "comments": null
-}
-```
-
-The server returns `201 Created` when the post is successfully created.
-
-## 2. Get a Post by ID
-
-Get a specific post using its ID.
+### Get a post
 
 ```bash
 curl http://localhost:3000/v1/posts/2 | jq
 ```
 
-### Example Response
-
-```json
-{
-  "id": 2,
-  "content": "This is my post for my account.",
-  "title": "my second post",
-  "user_id": 1,
-  "tags": [
-    "go",
-    "backend",
-    "postgres"
-  ],
-  "created_at": "2026-08-24T08:38:07Z",
-  "updated_at": "2026-08-24T08:38:07Z",
-  "comments": []
-}
-```
-
-The `comments` field contains the comments associated with the post.
-
-## 3. Update a Post
-
-Update an existing post using `PATCH /v1/posts/{postID}`.
+### Update a post
 
 ```bash
 curl -X PATCH http://localhost:3000/v1/posts/2 \
@@ -81,56 +38,17 @@ curl -X PATCH http://localhost:3000/v1/posts/2 \
   }'
 ```
 
-### Example Response
+`PATCH` updates only the fields provided.
 
-```json
-{
-  "id": 2,
-  "content": "Updated content",
-  "title": "Updated title",
-  "user_id": 1,
-  "tags": [
-    "go",
-    "backend"
-  ],
-  "created_at": "2026-08-24T08:38:07Z",
-  "updated_at": "2026-08-24T08:42:00Z",
-  "comments": null
-}
-```
-
-> [!NOTE]
-> A `PATCH` request can update only the fields that are provided.
-
-### Update Only the Title
+### Delete a post
 
 ```bash
-curl -X PATCH http://localhost:3000/v1/posts/2 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "New title"
-  }'
+curl -X DELETE http://localhost:3000/v1/posts/2
 ```
 
-### Update Only the Tags
+## Comments
 
-```bash
-curl -X PATCH http://localhost:3000/v1/posts/2 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tags": ["golang", "postgresql"]
-  }'
-```
-
-## 4. Create a Comment
-
-Create a comment for a specific post using:
-
-```text
-POST /v1/posts/{postID}/comments
-```
-
-For example, to add a comment to post `2`:
+### Create a comment
 
 ```bash
 curl -X POST http://localhost:3000/v1/posts/2/comments \
@@ -141,74 +59,85 @@ curl -X POST http://localhost:3000/v1/posts/2/comments \
   }'
 ```
 
-### Add Another Comment
-
-```bash
-curl -X POST http://localhost:3000/v1/posts/2/comments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": 1,
-    "content": "Really useful information."
-  }'
-```
-
-### Add One More Comment
-
-```bash
-curl -X POST http://localhost:3000/v1/posts/2/comments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": 1,
-    "content": "Thanks for sharing this!"
-  }'
-```
-
-## 5. Get a Post with Comments
-
-After creating comments, retrieve the post again:
+### Get a post with comments
 
 ```bash
 curl http://localhost:3000/v1/posts/2 | jq
 ```
 
-The response should contain the post and its comments:
+## Users
 
-```json
-{
-  "id": 2,
-  "title": "Updated title",
-  "content": "Updated content",
-  "user_id": 1,
-  "tags": [
-    "go",
-    "backend"
-  ],
-  "comments": [
-    {
-      "id": 1,
-      "post_id": 2,
-      "user_id": 1,
-      "content": "This is a great post!"
-    },
-    {
-      "id": 2,
-      "post_id": 2,
-      "user_id": 1,
-      "content": "Really useful information."
-    }
-  ]
-}
-```
-
-## 6. Delete a Post
-
-Delete a post using its ID:
+### Follow a user
 
 ```bash
-curl -X DELETE http://localhost:3000/v1/posts/1
+curl -X PUT http://localhost:3000/v1/users/2/follow \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 4}'
 ```
 
-If your `DELETE` endpoint returns the deleted post, you will receive the deleted post in the response.
+### Unfollow a user
+
+```bash
+curl -X PUT http://localhost:3000/v1/users/2/unfollow \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 4}'
+```
+
+## User Feed
+
+### Get the feed
+
+```bash
+curl http://localhost:3000/v1/users/feed | jq
+```
+
+### Pagination
+
+```bash
+# First 10 posts
+curl "http://localhost:3000/v1/users/feed?limit=10&offset=0" | jq
+
+# Next 10 posts
+curl "http://localhost:3000/v1/users/feed?limit=10&offset=10" | jq
+```
+
+The maximum allowed `limit` is `20`.
+
+### Sorting
+
+```bash
+# Ascending
+curl "http://localhost:3000/v1/users/feed?sort=asc" | jq
+
+# Descending
+curl "http://localhost:3000/v1/users/feed?sort=desc" | jq
+```
+
+### Search
+
+Searches post titles and content.
+
+```bash
+curl "http://localhost:3000/v1/users/feed?search=DIY" | jq
+```
+
+### Filter by tags
+
+```bash
+# One tag
+curl "http://localhost:3000/v1/users/feed?tags=Minimalism" | jq
+
+# Multiple tags
+curl "http://localhost:3000/v1/users/feed?tags=Mental%20Health,Minimalism" | jq
+```
+
+Multiple tags are comma-separated, and the post must contain all specified tags.
+
+### Combine filters
+
+```bash
+curl "http://localhost:3000/v1/users/feed?limit=10&offset=0&sort=desc&search=DIY&tags=Minimalism" | jq
+```
 
 ## API Endpoints
 
@@ -219,61 +148,6 @@ If your `DELETE` endpoint returns the deleted post, you will receive the deleted
 | `PATCH` | `/v1/posts/{postID}` | Update a post |
 | `DELETE` | `/v1/posts/{postID}` | Delete a post |
 | `POST` | `/v1/posts/{postID}/comments` | Create a comment |
-
-## Quick Test Flow
-
-You can test the API in the following order.
-
-### 1. Create a Post
-
-```bash
-curl -X POST http://localhost:3000/v1/posts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "my second post",
-    "content": "This is my post for my account.",
-    "tags": ["go", "backend", "postgres"]
-  }'
-```
-
-### 2. Get the Post
-
-```bash
-curl http://localhost:3000/v1/posts/2 | jq
-```
-
-### 3. Update the Post
-
-```bash
-curl -X PATCH http://localhost:3000/v1/posts/2 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Updated title",
-    "content": "Updated content",
-    "tags": ["go", "backend"]
-  }'
-```
-
-### 4. Add a Comment
-
-```bash
-curl -X POST http://localhost:3000/v1/posts/2/comments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": 1,
-    "content": "This is a great post!"
-  }'
-```
-
-### 5. Get the Post with Comments
-
-```bash
-curl http://localhost:3000/v1/posts/2 | jq
-```
-
-### 6. Delete the Post
-
-```bash
-curl -X DELETE http://localhost:3000/v1/posts/1
-```
-```
+| `PUT` | `/v1/users/{userID}/follow` | Follow a user |
+| `PUT` | `/v1/users/{userID}/unfollow` | Unfollow a user |
+| `GET` | `/v1/users/feed` | Get the user feed |
