@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"database/sql"
+
 	"github.com/lib/pq"
 )
+
 type Follower struct {
 	UserID     int64  `json:"user_id"`
 	FollowerID int64  `json:follower_id`
@@ -14,8 +16,6 @@ type Follower struct {
 type FollowerStore struct {
 	db *sql.DB
 }
-
-
 
 func (s *FollowerStore) Follow(ctx context.Context, followerID, userID int64) error {
 	query := `

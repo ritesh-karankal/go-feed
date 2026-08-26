@@ -1,9 +1,9 @@
 package store
 
 import (
-	"errors"
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type User struct {
@@ -56,10 +56,10 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 	user := &User{}
 
 	err := s.db.QueryRowContext(
-		ctx, 
-		query, 
+		ctx,
+		query,
 		userID,
-		).Scan(
+	).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,

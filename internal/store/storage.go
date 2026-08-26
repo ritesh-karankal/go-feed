@@ -1,10 +1,10 @@
 package store
 
 import (
-	"time"
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 )
 
 var (
@@ -13,6 +13,7 @@ var (
 	ErrEditConflict      = errors.New("edit conflict")
 	QueryTimeoutDuration = time.Second * 5
 )
+
 type Storage struct {
 	Posts interface {
 		GetByID(context.Context, int64) (*Post, error)

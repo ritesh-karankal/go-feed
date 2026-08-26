@@ -2,8 +2,9 @@ package store
 
 import (
 	"context"
-	"errors"
 	"database/sql"
+	"errors"
+
 	"github.com/lib/pq"
 )
 
@@ -116,7 +117,6 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 		post.Title,
 		post.UserID,
 		pq.Array(post.Tags),
-
 	).Scan(
 		&post.ID,
 		&post.CreatedAt,
@@ -186,7 +186,6 @@ func (s *PostStore) Delete(ctx context.Context, id int64) error {
 
 	return err
 }
-
 
 func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	query := `

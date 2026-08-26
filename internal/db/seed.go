@@ -1,11 +1,11 @@
 package db
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand"
-	"context"
-	"database/sql"
 
 	"github.com/ritesh-karankal/go-feed/internal/store"
 )
@@ -17,7 +17,7 @@ var usernames = []string{
 	"Hana", "Minjun", "Jisoo", "Seojun", "Sora", "Jiwoo", "Mateus", "Beatriz",
 	"Joao", "Camila", "Rafael", "Mariana", "Thiago", "Larissa", "Diego", "Valentina",
 	"Kwame", "Amara", "Kofi", "Adwoa", "Chinedu", "Zuri", "zack", "amber", "brian",
-	 "carol", "doug", "eric", "fiona", "oliver", "peter", "queen", "ron", "susan", 
+	"carol", "doug", "eric", "fiona", "oliver", "peter", "queen", "ron", "susan",
 	"Jelani", "Imani", "Ayo", "Fatima", "Thabo", "Nomsa", "Lerato", "Sipho",
 	"Zanele", "Elsa", "Freja", "Lars", "Ingrid", "Erik", "Anna", "Matteo",
 	"Giulia", "Lorenzo", "Chiara", "Pierre", "Camille", "Etienne", "Amelie", "Gabriel",
