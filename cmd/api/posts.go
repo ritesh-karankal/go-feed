@@ -119,7 +119,7 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	idParam := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		app.internalServerError(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 		idParam := chi.URLParam(r, "postID")
 		id, err := strconv.ParseInt(idParam, 10, 64)
 		if err != nil {
-			app.internalServerError(w, r, err)
+			app.badRequestResponse(w, r, err)
 			return
 		}
 
