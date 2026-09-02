@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+
 	"go.uber.org/zap"
 
 	"github.com/ritesh-karankal/go-feed/internal/db"

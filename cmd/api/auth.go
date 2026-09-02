@@ -1,9 +1,10 @@
 package main
 
 import (
-	"net/http"
 	"crypto/sha256"
 	"encoding/hex"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 )
@@ -14,6 +15,10 @@ type RegisterUserPayload struct {
 	Password string `json:"password" validate:"required,min=3,max=72"`
 }
 
+type UserWithToken struct {
+	*store.User
+	Token string `json:"token"`
+}
 
 // registerUserHandler godoc
 //
@@ -73,8 +78,6 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	// send mail
-
-
 
 	if err := app.jsonResponse(w, http.StatusCreated, nil); err != nil {
 		app.internalServerError(w, r, err)

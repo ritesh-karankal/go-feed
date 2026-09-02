@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
-
 
 var (
 	ErrDuplicateEmail    = errors.New("a user with that email already exists")
@@ -52,7 +52,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	err := s.db.QueryRowContext(
+	err := tx.QueryRowContext(
 		ctx,
 		query,
 		user.Username,
@@ -73,7 +73,6 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 			return err
 		}
 	}
-
 
 	return nil
 }
@@ -113,7 +112,6 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 	return user, nil
 }
 
-
 func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error {
 	// transaction wrapper
 	return withTx(s.db, ctx, func(tx *sql.Tx) error {
@@ -131,7 +129,7 @@ func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token strin
 }
 
 func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
-	query := `INSERT INTO user_invitations (token, user_id, expiry) VALUES ($!, $2, $3)`
+	query := `INSERT INTO user_invitations (token, user_id, expiry) VALUES ($1, $2, $3)`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -142,7 +140,6 @@ func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token 
 		token,
 		userID,
 		time.Now().Add(exp))
-
 
 	if err != nil {
 		return err
