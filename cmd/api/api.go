@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ritesh-karankal/go-feed/docs" // This is required to generate swagger docs
+	"github.com/ritesh-karankal/go-feed/internal/mailer"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -17,19 +18,28 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type config struct {
-	addr   string
-	db     dbConfig
-	env    string
-	apiURL string
-	mail   mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	apiURL      string
+	mail        mailConfig
+	frontendURL string
 }
 
 type mailConfig struct {
-	exp time.Duration
+	sendGrid  sendGridConfig
+	fromEmail string
+	exp       time.Duration
 }
+
+type sendGridConfig struct {
+	apiKey string
+}
+
 type dbConfig struct {
 	addr         string
 	maxOpenConns int
