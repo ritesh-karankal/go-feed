@@ -28,8 +28,17 @@ type config struct {
 	apiURL      string
 	mail        mailConfig
 	frontendURL string
+	auth        authConfig
 }
 
+type authConfig struct {
+	basic basicConfig
+}
+
+type basicConfig struct {
+	user string
+	pass string
+}
 type mailConfig struct {
 	sendGrid  sendGridConfig
 	fromEmail string
@@ -61,7 +70,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", app.healthCheckHandler)
+		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 
 		r.Get("/swagger/*", httpSwagger.Handler(
 			httpSwagger.URL("/v1/swagger/doc.json"),
