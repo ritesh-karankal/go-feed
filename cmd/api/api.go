@@ -39,6 +39,7 @@ type basicConfig struct {
 	user string
 	pass string
 }
+
 type mailConfig struct {
 	sendGrid  sendGridConfig
 	fromEmail string

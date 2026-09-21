@@ -187,7 +187,7 @@ paths:
       - authentication
   /health:
     get:
-      description: Healthcheck endpoint
+      description: Check API health
       produces:
       - application/json
       responses:
@@ -195,9 +195,16 @@ paths:
           description: ok
           schema:
             type: string
-      summary: Healthcheck
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BasicAuth: []
+      summary: Health check
       tags:
-      - ops
+      - health
   /posts:
     post:
       consumes:

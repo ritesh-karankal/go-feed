@@ -68,19 +68,31 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Healthcheck endpoint",
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Check API health",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "ops"
+                    "health"
                 ],
-                "summary": "Healthcheck",
+                "summary": "Health check",
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
