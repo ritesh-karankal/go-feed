@@ -34,7 +34,23 @@ type CreateUserPayload struct {
 //	@Security		ApiKeyAuth
 //	@Router			/users/{id} [get]
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromContext(r)
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	user, err := app.getUser(r.Context(), userID)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+			return
+		default:
+			app.internalServerError(w, r, err)
+			return
+		}
+	}
 
 	if err := app.jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)

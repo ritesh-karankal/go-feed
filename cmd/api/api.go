@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,12 +13,14 @@ import (
 	"github.com/ritesh-karankal/go-feed/internal/auth"
 	"github.com/ritesh-karankal/go-feed/internal/mailer"
 	"github.com/ritesh-karankal/go-feed/internal/store"
+	"github.com/ritesh-karankal/go-feed/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type application struct {
 	config        config
 	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
@@ -31,8 +34,15 @@ type config struct {
 	mail        mailConfig
 	frontendURL string
 	auth        authConfig
+	redisCfg    redisConfig
 }
 
+type redisConfig struct {
+	addr    string
+	pw      string
+	db      int
+	enabled bool
+}
 type authConfig struct {
 	basic basicConfig
 	token tokenConfig
@@ -82,9 +92,8 @@ func (app *application) mount() http.Handler {
 	r.Route("/v1", func(r chi.Router) {
 		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 
-		r.Get("/swagger/*", httpSwagger.Handler(
-			httpSwagger.URL("/v1/swagger/doc.json"),
-		))
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/posts", func(r chi.Router) {
 			r.Use(app.AuthTokenMiddleware)
