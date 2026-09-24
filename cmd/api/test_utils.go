@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ritesh-karankal/go-feed/internal/auth"
+	"github.com/ritesh-karankal/go-feed/internal/ratelimiter"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 	"github.com/ritesh-karankal/go-feed/internal/store/cache"
 	"go.uber.org/zap"
@@ -22,12 +23,19 @@ func newTestApplication(t *testing.T, cfg config) *application {
 
 	testAuth := &auth.TestAuthenticator{}
 
+	// Rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	return &application{
 		logger:        logger,
 		store:         mockStore,
 		cacheStorage:  mockCacheStore,
 		authenticator: testAuth,
 		config:        cfg,
+		rateLimiter:   rateLimiter,
 	}
 }
 

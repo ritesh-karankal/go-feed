@@ -17,6 +17,7 @@ import (
 	"github.com/ritesh-karankal/go-feed/docs" // This is required to generate swagger docs
 	"github.com/ritesh-karankal/go-feed/internal/auth"
 	"github.com/ritesh-karankal/go-feed/internal/mailer"
+	"github.com/ritesh-karankal/go-feed/internal/ratelimiter"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 	"github.com/ritesh-karankal/go-feed/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -29,6 +30,7 @@ type application struct {
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	rateLimiter   ratelimiter.Limiter
 }
 
 type config struct {
@@ -40,6 +42,7 @@ type config struct {
 	frontendURL string
 	auth        authConfig
 	redisCfg    redisConfig
+	rateLimiter ratelimiter.Config
 }
 
 type redisConfig struct {
@@ -89,6 +92,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.ClientIPFromRemoteAddr)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further

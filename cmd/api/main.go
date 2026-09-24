@@ -10,6 +10,7 @@ import (
 	"github.com/ritesh-karankal/go-feed/internal/db"
 	"github.com/ritesh-karankal/go-feed/internal/env"
 	"github.com/ritesh-karankal/go-feed/internal/mailer"
+	"github.com/ritesh-karankal/go-feed/internal/ratelimiter"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 	"github.com/ritesh-karankal/go-feed/internal/store/cache"
 )
@@ -69,6 +70,11 @@ func main() {
 			db:      env.GetInt("REDIS_DB", 0),
 			enabled: env.GetBool("REDIS_ENABLED", false),
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	// Logger
@@ -98,6 +104,12 @@ func main() {
 		defer rdb.Close()
 	}
 
+	// Rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	store := store.NewStorage(db)
 
 	cacheStorage := cache.NewRedisStorage(rdb)
@@ -117,6 +129,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
