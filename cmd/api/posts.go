@@ -241,3 +241,65 @@ func getPostFromCtx(r *http.Request) *store.Post {
 	post, _ := r.Context().Value(postCtx).(*store.Post)
 	return post
 }
+
+type CreateCommentPayload struct {
+	Content string `json:"content" validate:"required,max=1000"`
+}
+
+func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
+	var payload CreateCommentPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	post := getPostFromCtx(r)
+	user := getUserFromContext(r)
+	if user == nil {
+		app.unauthorizedErrorResponse(w, r, errors.New("user context missing"))
+		return
+	}
+
+	ctx := r.Context()
+
+	// Comment permission check:
+	// Allowed if commenter is post author, or admin/moderator, or follows the post author
+	isAuthor := post.UserID == user.ID
+	isAdmin := user.Role.Name == "admin" || user.Role.Name == "moderator"
+	isFollowing := false
+	if !isAuthor && !isAdmin {
+		var err error
+		isFollowing, err = app.store.Followers.IsFollowing(ctx, user.ID, post.UserID)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+	}
+
+	if !isAuthor && !isAdmin && !isFollowing {
+		_ = writeJSONError(w, http.StatusForbidden, "You must follow this user to comment on their posts")
+		return
+	}
+
+	comment := &store.Comment{
+		PostID:  post.ID,
+		UserID:  user.ID,
+		Content: payload.Content,
+	}
+
+	if err := app.store.Comments.Create(ctx, comment); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	comment.User = *user
+
+	if err := app.jsonResponse(w, http.StatusCreated, comment); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
