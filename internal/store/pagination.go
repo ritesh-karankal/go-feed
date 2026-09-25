@@ -13,6 +13,7 @@ type PaginatedFeedQuery struct {
 	Sort   string   `json:"sort" validate:"oneof=asc desc"`
 	Tags   []string `json:"tags" validate:"max=5"`
 	Search string   `json:"search" validate:"max=100"`
+	Filter string   `json:"filter"`
 	Since  string   `json:"since"`
 	Until  string   `json:"until"`
 }
@@ -41,6 +42,11 @@ func (fq PaginatedFeedQuery) Parse(r *http.Request) (PaginatedFeedQuery, error) 
 	sort := qs.Get("sort")
 	if sort != "" {
 		fq.Sort = sort
+	}
+
+	filter := qs.Get("filter")
+	if filter != "" {
+		fq.Filter = filter
 	}
 
 	tags := qs.Get("tags")
