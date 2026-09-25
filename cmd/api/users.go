@@ -58,6 +58,34 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getUserPostsHandler godoc
+//
+//	@Summary		Fetches a user's posts
+//	@Description	Fetches all posts created by a user
+//	@Tags			users
+//	@Produce		json
+//	@Param			userID	path	int	true	"User ID"
+//	@Success		200		{array}	store.PostWithMetadata
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID}/posts [get]
+func (app *application) getUserPostsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	posts, err := app.store.Posts.GetByUserID(r.Context(), userID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, posts); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
 // FollowUser godoc
 //
 //	@Summary		Follows a user
@@ -131,6 +159,109 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+}
+
+func (app *application) getUserFollowersHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	followers, err := app.store.Followers.GetFollowers(r.Context(), userID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, followers); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getUserFollowingHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	following, err := app.store.Followers.GetFollowing(r.Context(), userID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, following); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getUserFollowCountsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	counts, err := app.store.Followers.GetCounts(r.Context(), userID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, counts); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getFollowStatusHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser := getUserFromContext(r)
+	targetID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if currentUser == nil {
+		_ = app.jsonResponse(w, http.StatusOK, map[string]bool{"is_following": false})
+		return
+	}
+
+	isFollowing, err := app.store.Followers.IsFollowing(r.Context(), currentUser.ID, targetID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, map[string]bool{"is_following": isFollowing}); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getSuggestedUsersHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser := getUserFromContext(r)
+	if currentUser == nil {
+		_ = app.jsonResponse(w, http.StatusOK, []store.User{})
+		return
+	}
+
+	limit := 5
+	if limitParam := r.URL.Query().Get("limit"); limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	users, err := app.store.Followers.GetSuggested(r.Context(), currentUser.ID, limit)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, users); err != nil {
+		app.internalServerError(w, r, err)
+	}
 }
 
 // ActivateUser godoc

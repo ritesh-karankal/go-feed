@@ -114,6 +114,7 @@ func (app *application) mount() http.Handler {
 				r.Use(app.postsContextMiddleware)
 
 				r.Get("/", app.getPostHandler)
+				r.Post("/comments", app.createCommentHandler)
 				r.Patch("/", app.checkPostOwnership("moderator", app.updatePostHandler))
 				r.Delete("/", app.checkPostOwnership("admin", app.deletePostHandler))
 
@@ -127,13 +128,19 @@ func (app *application) mount() http.Handler {
 				r.Use(app.AuthTokenMiddleware)
 
 				r.Get("/", app.getUserHandler)
+				r.Get("/posts", app.getUserPostsHandler)
 				r.Put("/follow", app.followUserHandler)
 				r.Put("/unfollow", app.unfollowUserHandler)
+				r.Get("/followers", app.getUserFollowersHandler)
+				r.Get("/following", app.getUserFollowingHandler)
+				r.Get("/follow-counts", app.getUserFollowCountsHandler)
+				r.Get("/follow-status", app.getFollowStatusHandler)
 			})
 
 			r.Group(func(r chi.Router) {
 				r.Use(app.AuthTokenMiddleware)
 				r.Get("/feed", app.getUserFeedHandler)
+				r.Get("/suggested", app.getSuggestedUsersHandler)
 			})
 		})
 
