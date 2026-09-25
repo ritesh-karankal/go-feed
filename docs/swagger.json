@@ -554,6 +554,43 @@
                 }
             }
         },
+        "/users/{userID}/posts": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches all posts created by a user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Fetches a user's posts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/store.PostWithMetadata"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/users/{userID}/unfollow": {
             "put": {
                 "security": [
@@ -786,7 +823,7 @@
                         "$ref": "#/definitions/store.Comment"
                     }
                 },
-                "commentsCount": {
+                "comments_count": {
                     "type": "integer"
                 },
                 "content": {

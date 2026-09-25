@@ -126,7 +126,7 @@ definitions:
         items:
           $ref: '#/definitions/store.Comment'
         type: array
-      commentsCount:
+      comments_count:
         type: integer
       content:
         type: string
@@ -457,6 +457,29 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Follows a user
+      tags:
+      - users
+  /users/{userID}/posts:
+    get:
+      description: Fetches all posts created by a user
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/store.PostWithMetadata'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: Fetches a user's posts
       tags:
       - users
   /users/{userID}/unfollow:
