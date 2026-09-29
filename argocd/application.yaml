@@ -15,6 +15,9 @@ spec:
     targetRevision: HEAD
     # Path to your Kubernetes manifests directory
     path: k8s
+    # Recursively include all subdirectories (k8s/app/, k8s/gateway/, k8s/external-secrets/)
+    directory:
+      recurse: true
 
   destination:
     server: https://kubernetes.default.svc
