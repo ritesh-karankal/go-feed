@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: go-feed
+  namespace: argocd
+  # Finalizer ensures ArgoCD cleans up resources when this Application is deleted
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # Your GitHub repository containing k8s manifests
+    repoURL: https://github.com/ritesh-karankal/gopher-feed.git
+    targetRevision: HEAD
+    # Path to your Kubernetes manifests directory
+    path: k8s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    # Automatically sync when Git changes are detected
+    automated:
+      prune: true       # Delete resources removed from Git
+      selfHeal: true    # Revert manual kubectl changes to match Git state
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
