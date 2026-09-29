@@ -19,7 +19,7 @@ spec:
       # Replace <tag> with the image tag you want to deploy (e.g. latest, v1.0.0, or a commit SHA).
       containers:
         - name: go-feed
-          image: ghcr.io/ritesh-karankal/go-feed:<tag>
+          image: ghcr.io/ritesh-karankal/go-feed:latest
           ports:
             - containerPort: 8080
 
