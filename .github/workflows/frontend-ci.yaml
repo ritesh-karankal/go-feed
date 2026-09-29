@@ -1,16 +1,18 @@
 name: Frontend CI — Build, Scan & Push
 
 on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
   push:
     branches: [ main ]
-    # Only trigger when frontend source code or Dockerfile changes
     paths:
       - "frontend/**"
+      - ".github/workflows/frontend-ci.yaml"
 
   pull_request:
     branches: [ main ]
     paths:
       - "frontend/**"
+      - ".github/workflows/frontend-ci.yaml"
 
 permissions:
   contents: read
