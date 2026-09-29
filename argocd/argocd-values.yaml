@@ -1,5 +1,5 @@
 ## Argo CD configuration for gopher-feed
-## Adapted from tutor's argocd-values-9.4.0.yaml
+## Adapted argocd-values-9.4.0.yaml
 ## Key differences: no domain/TLS, uses ALB Gateway HTTP only
 
 nameOverride: argocd

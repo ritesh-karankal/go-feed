@@ -37,7 +37,7 @@ FROM scratch
 # OCI metadata
 LABEL org.opencontainers.image.title="go-feed-api"
 LABEL org.opencontainers.image.description="Go Feed API"
-LABEL org.opencontainers.image.source="https://github.com/YOUR_USERNAME/YOUR_REPO"
+LABEL org.opencontainers.image.source="https://github.com/ritesh-karankal/go-feed"
 
 # CA certificates for outbound HTTPS
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt \
