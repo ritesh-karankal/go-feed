@@ -23,25 +23,11 @@ spec:
           ports:
             - containerPort: 8080
 
-          env:
-            - name: ADDR
-              value: ":8080"
-
-            # Reference secrets from a Kubernetes Secret (create separately).
-            # kubectl create secret generic go-feed-secrets \
-            #   --from-literal=DB_ADDR="postgres://..." \
-            #   --from-literal=AUTH_TOKEN_SECRET="..."
-            - name: DB_ADDR
-              valueFrom:
-                secretKeyRef:
-                  name: go-feed-secrets
-                  key: DB_ADDR
-
-            - name: AUTH_TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: go-feed-secrets
-                  key: AUTH_TOKEN_SECRET
+          # Production Best Practice:
+          # Automatically inject ALL keys synced from Vault into environment variables
+          envFrom:
+            - secretRef:
+                name: go-feed-secrets
 
           resources:
             requests:
