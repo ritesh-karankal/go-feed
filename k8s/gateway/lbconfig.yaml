@@ -1,0 +1,14 @@
+apiVersion: gateway.k8s.aws/v1beta1
+kind: LoadBalancerConfiguration
+metadata:
+  name: go-feed-lbconfig
+  namespace: default
+spec:
+  # internet-facing = public ALB reachable from the internet.
+  # Change to "internal" if you only need VPC-internal access.
+  scheme: internet-facing
+
+  # Uncomment and add your ACM certificate ARN when you have a domain:
+  # listenerConfigurations:
+  #   - protocolPort: HTTPS:443
+  #     defaultCertificate: arn:aws:acm:us-east-1:<account-id>:certificate/<cert-id>
