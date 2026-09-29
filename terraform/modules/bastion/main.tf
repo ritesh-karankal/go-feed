@@ -1,5 +1,16 @@
-data "aws_ssm_parameter" "al2023" {
-  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
 resource "aws_iam_role" "bastion" {
@@ -51,13 +62,21 @@ resource "aws_security_group" "bastion" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  egress {
+    description = "HTTP outbound (apt package repos)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "${var.project_name}-${var.environment}-bastion"
   }
 }
 
 resource "aws_instance" "bastion" {
-  ami = data.aws_ssm_parameter.al2023.value
+  ami = data.aws_ami.ubuntu.id
 
   instance_type = var.instance_type
 

@@ -56,6 +56,11 @@ module "eks" {
 
     aws-ebs-csi-driver = {
       most_recent = true
+
+      pod_identity_association = [{
+        role_arn        = aws_iam_role.ebs_csi_driver.arn
+        service_account = "ebs-csi-controller-sa"
+      }]
     }
   }
 

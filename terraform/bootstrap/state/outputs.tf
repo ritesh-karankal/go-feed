@@ -1,10 +1,9 @@
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
+output "state_bucket_name" {
+  description = "Name of the Terraform state S3 bucket"
+  value       = aws_s3_bucket.terraform_state.bucket
 }
 
-variable "state_bucket_name" {
-  description = "Globally unique Terraform state bucket name"
-  type        = string
+output "state_bucket_arn" {
+  description = "ARN of the Terraform state S3 bucket"
+  value       = aws_s3_bucket.terraform_state.arn
 }
