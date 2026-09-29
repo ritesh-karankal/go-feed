@@ -1,26 +1,26 @@
 name: Frontend CI — Build, Scan & Push
 
 on:
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch:
+
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yaml"
 
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yaml"
 
 permissions:
   contents: read
-  packages: write   # Required to push to GHCR
+  packages: write
 
 env:
   REGISTRY: ghcr.io
-  # Image: ghcr.io/ritesh-karankal/go-feed-frontend
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/go-feed-frontend
 
 jobs:
@@ -36,15 +36,45 @@ jobs:
         uses: actions/checkout@v4
 
       # ---------------------------------------------------
-      # 2. Set up Docker Buildx (enables layer caching)
+      # 2. Set up Docker Buildx
       # ---------------------------------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       # ---------------------------------------------------
-      # 3. Log in to GitHub Container Registry
+      # 3. Build Docker image
+      # ---------------------------------------------------
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          tags: |
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---------------------------------------------------
+      # 4. Security scan with Trivy
+      # ---------------------------------------------------
+      - name: Run Trivy security scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: true
+          exit-code: 1
+          format: table
+
+      # ---------------------------------------------------
+      # 5. Login to GitHub Container Registry
+      #    Only required when pushing to main
       # ---------------------------------------------------
       - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -52,34 +82,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # ---------------------------------------------------
-      # 4. Build Docker image from frontend/Dockerfile
-      #    Tag with commit SHA for traceability
-      # ---------------------------------------------------
-      - name: Build Docker image
-        run: |
-          docker build \
-            --cache-from=type=gha \
-            --cache-to=type=gha,mode=max \
-            -t ${{ env.IMAGE_NAME }}:sha-${{ github.sha }} \
-            -t ${{ env.IMAGE_NAME }}:latest \
-            ./frontend
-
-      # ---------------------------------------------------
-      # 5. Security Scan with Trivy (before push)
-      #    Scans for HIGH and CRITICAL vulnerabilities
-      # ---------------------------------------------------
-      - name: Run Trivy security scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: image
-          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          severity: HIGH,CRITICAL
-          exit-code: 0
-          vuln-type: os,library
-          format: table
-
-      # ---------------------------------------------------
-      # 6. Push image to GHCR (only on push to main, not PRs)
+      # 6. Push image to GHCR
       # ---------------------------------------------------
       - name: Push image to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
