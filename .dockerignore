@@ -21,7 +21,6 @@ argocd/
 frontend/
 
 # Documentation
-docs/
 *.md
 README*
 
