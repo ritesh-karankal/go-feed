@@ -11,7 +11,7 @@ spec:
 
   source:
     # Your GitHub repository containing k8s manifests
-    repoURL: https://github.com/ritesh-karankal/gopher-feed.git
+    repoURL: https://github.com/ritesh-karankal/go-feed.git
     targetRevision: HEAD
     # Path to your Kubernetes manifests directory
     path: k8s
