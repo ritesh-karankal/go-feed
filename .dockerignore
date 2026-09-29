@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Local environment secrets — NEVER include in image
+.envrc
+.env
+.env.*
+*.env
+
+# Terraform state & secrets
+terraform/
+*.tfstate
+*.tfvars
+
+# Kubernetes manifests (not needed in runtime image)
+k8s/
+argocd/
+
+# Frontend (separate image)
+frontend/
+
+# Documentation
+docs/
+*.md
+README*
+
+# Development tools
+.air.toml
+Makefile
+
+# Test files
+*_test.go
+testdata/
+
+# IDE configs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Binaries
+bin/
