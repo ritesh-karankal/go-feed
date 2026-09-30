@@ -1,7 +1,7 @@
 # ============================================================
 # Build stage
 # ============================================================
-FROM golang:1.23-alpine AS builder
+FROM golang:1.26.3-alpine AS builder
 
 WORKDIR /src
 
@@ -10,7 +10,7 @@ RUN apk add --no-cache ca-certificates tzdata
 
 # Cache Go dependencies separately from application source
 COPY go.mod go.sum ./
-RUN go mod download && go mod verify
+RUN go mod download
 
 # Copy application source
 COPY . .
