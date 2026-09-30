@@ -49,6 +49,7 @@ jobs:
         with:
           context: ./frontend
           push: false
+          load: true
           tags: |
             ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
             ${{ env.IMAGE_NAME }}:latest
