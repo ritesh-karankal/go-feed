@@ -1,0 +1,55 @@
+imagePullSecrets:
+  - name: ghcr-secret
+
+api:
+  name: go-feed
+  replicaCount: 2
+  image:
+    repository: ghcr.io/ritesh-karankal/go-feed
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 8080
+    targetPort: 8080
+  envFromSecret: go-feed-secrets
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  livenessProbe:
+    path: /v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  readinessProbe:
+    path: /v1/health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+frontend:
+  name: go-feed-frontend
+  replicaCount: 2
+  image:
+    repository: ghcr.io/ritesh-karankal/go-feed-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 8080
+    targetPort: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 15
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 3
+    periodSeconds: 10
