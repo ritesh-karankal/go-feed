@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ritesh-karankal/go-feed/internal/store"
 )
@@ -162,7 +163,14 @@ func (app *application) getUser(ctx context.Context, userID int64) (*store.User,
 func (app *application) RateLimiterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if app.config.rateLimiter.Enabled {
-			if allow, retryAfter := app.rateLimiter.Allow(r.RemoteAddr); !allow {
+			// Key on the client IP (set by the ClientIP middleware), not
+			// r.RemoteAddr, which includes the per-connection source port.
+			clientIP := middleware.GetClientIP(r.Context())
+			if clientIP == "" {
+				clientIP = r.RemoteAddr
+			}
+
+			if allow, retryAfter := app.rateLimiter.Allow(clientIP); !allow {
 				app.rateLimitExceededResponse(w, r, retryAfter.String())
 				return
 			}
