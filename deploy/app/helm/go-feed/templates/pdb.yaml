@@ -1,0 +1,21 @@
+{{- /* Keeps pods running during voluntary disruptions (node drains, upgrades) */}}
+{{- range $component := list .Values.api .Values.frontend }}
+{{- with $component.podDisruptionBudget }}
+{{- if .enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $component.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $component.name }}
+    {{- include "gopher-feed.labels" $ | nindent 4 }}
+spec:
+  minAvailable: {{ .minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $component.name }}
+{{- end }}
+{{- end }}
+{{- end }}

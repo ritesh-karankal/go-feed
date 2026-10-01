@@ -7,7 +7,10 @@ metadata:
     app.kubernetes.io/name: {{ .Values.frontend.name }}
     {{- include "gopher-feed.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.frontend.autoscaling.enabled }}
+  # With autoscaling, the HPA owns the replica count
   replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.frontend.name }}

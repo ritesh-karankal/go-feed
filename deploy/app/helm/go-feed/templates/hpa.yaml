@@ -1,0 +1,35 @@
+{{- /* CPU-based HorizontalPodAutoscaler for each component with autoscaling enabled */}}
+{{- range $component := list .Values.api .Values.frontend }}
+{{- with $component.autoscaling }}
+{{- if .enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $component.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $component.name }}
+    {{- include "gopher-feed.labels" $ | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $component.name }}
+  minReplicas: {{ .minReplicas }}
+  maxReplicas: {{ .maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          # Percentage of the container's CPU *request*
+          type: Utilization
+          averageUtilization: {{ .targetCPUUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      # Wait 5 minutes of low load before removing pods (avoids flapping)
+      stabilizationWindowSeconds: 300
+{{- end }}
+{{- end }}
+{{- end }}

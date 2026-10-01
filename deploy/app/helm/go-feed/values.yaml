@@ -3,7 +3,16 @@ imagePullSecrets:
 
 api:
   name: go-feed
+  # Used only when autoscaling is disabled
   replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
   image:
     repository: ghcr.io/ritesh-karankal/go-feed
     tag: latest
@@ -76,7 +85,16 @@ postgres:
 
 frontend:
   name: go-feed-frontend
+  # Used only when autoscaling is disabled
   replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
   image:
     repository: ghcr.io/ritesh-karankal/go-feed-frontend
     tag: latest
