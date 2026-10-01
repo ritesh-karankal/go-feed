@@ -10,10 +10,10 @@ spec:
   project: default
 
   source:
-    # Root Kustomize source renders the Helm chart and platform resources.
+    # deploy/app Kustomize source renders the Helm chart and platform resources.
     repoURL: https://github.com/ritesh-karankal/go-feed.git
     targetRevision: HEAD
-    path: .
+    path: deploy/app
 
   destination:
     server: https://kubernetes.default.svc

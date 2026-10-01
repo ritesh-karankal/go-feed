@@ -14,8 +14,7 @@ terraform/
 *.tfvars
 
 # Kubernetes manifests (not needed in runtime image)
-k8s/
-argocd/
+deploy/
 
 # Frontend (separate image)
 frontend/

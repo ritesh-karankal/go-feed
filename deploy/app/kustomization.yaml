@@ -8,12 +8,12 @@ helmCharts:
     namespace: default
     valuesFile: helm/go-feed/values.yaml
 resources:
-  - kube-manifests/HTTProute.yaml
-  - kube-manifests/target-grp.yaml
-  - k8s/gateway/gateway-class.yaml
-  - k8s/gateway/lbconfig.yaml
-  - k8s/gateway/gateway.yaml
+  - gateway/gateway-class.yaml
+  - gateway/lbconfig.yaml
+  - gateway/gateway.yaml
+  - gateway/httproute.yaml
+  - gateway/target-group-configs.yaml
   - argocd/argo-tg-config.yaml
-  - k8s/external-secrets/cluster-secret-store-vault.yaml
-  - k8s/external-secrets/external-secret.yaml
   - argocd/image-updater.yaml
+  - external-secrets/cluster-secret-store-vault.yaml
+  - external-secrets/external-secret.yaml
