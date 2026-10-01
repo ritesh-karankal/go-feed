@@ -18,6 +18,8 @@ COPY . .
 # Build a static, stripped binary.
 # CMD selects the program under ./cmd: "api" (default) or "migrate".
 ARG CMD=api
+# Release version baked into the binary (main.version); CI passes git describe
+ARG VERSION=dev
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -26,7 +28,7 @@ RUN CGO_ENABLED=0 \
     GOARCH=${TARGETARCH:-amd64} \
     go build \
       -trimpath \
-      -ldflags="-s -w" \
+      -ldflags="-s -w -X main.version=${VERSION}" \
       -o /out/app \
       ./cmd/${CMD}
 

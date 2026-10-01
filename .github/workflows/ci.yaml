@@ -5,6 +5,8 @@ on:
 
   push:
     branches: [main]
+    # Release tags (v0.1.0, ...); path filters do not apply to tag pushes
+    tags: ["v*"]
     paths:
       - "**.go"
       - "go.mod"
@@ -87,6 +89,17 @@ jobs:
       # ---------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Full history and tags, so git describe can find the last release
+          fetch-depth: 0
+
+      # ---------------------------------------------------
+      # Version baked into the binary: v0.1.0 on a tag push,
+      # v0.1.0-3-gabc1234 for later commits on main
+      # ---------------------------------------------------
+      - name: Compute version
+        id: version
+        run: echo "version=$(git describe --tags --always)" >> "$GITHUB_OUTPUT"
 
       # ---------------------------------------------------
       # 2. Set up Docker Buildx
@@ -103,6 +116,7 @@ jobs:
           context: .
           build-args: |
             CMD=${{ matrix.cmd }}
+            VERSION=${{ steps.version.outputs.version }}
           push: false
           load: true
           tags: |
@@ -130,7 +144,7 @@ jobs:
       #    Only required when pushing to main
       # ---------------------------------------------------
       - name: Login to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -141,7 +155,13 @@ jobs:
       # 6. Push image to GHCR
       # ---------------------------------------------------
       - name: Push image to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
         run: |
           docker push ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          docker push ${{ env.IMAGE_NAME }}:latest
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            # Release image, e.g. go-feed:v0.1.0
+            docker tag ${{ env.IMAGE_NAME }}:sha-${{ github.sha }} ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            docker push ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          else
+            docker push ${{ env.IMAGE_NAME }}:latest
+          fi

@@ -17,7 +17,9 @@ import (
 	"github.com/ritesh-karankal/go-feed/internal/store/cache"
 )
 
-const version = "0.0.1"
+// version is set at build time: go build -ldflags "-X main.version=v0.1.0".
+// Local builds (go run) report "dev".
+var version = "dev"
 
 //	@title			GoFeed API
 //	@description	API for GoFeed, a social network for gophers
