@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"expvar"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/ritesh-karankal/go-feed/docs" // This is required to generate swagger docs
@@ -92,6 +93,8 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.ClientIPFromRemoteAddr)
 	r.Use(middleware.Logger)
+	// Before Recoverer, so requests that panic are counted as 500s
+	r.Use(app.metricsMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(app.RateLimiterMiddleware)
 
@@ -99,6 +102,10 @@ func (app *application) mount() http.Handler {
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
+
+	// Prometheus scrape endpoint. Outside /v1 on purpose: the ALB only routes
+	// /v1/* to the API, so this is reachable in-cluster only.
+	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 
 	r.Route("/v1", func(r chi.Router) {
 

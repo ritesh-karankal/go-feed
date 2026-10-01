@@ -12,6 +12,12 @@ api:
     port: 8080
     targetPort: 8080
   envFromSecret: go-feed-secrets
+  # Prometheus metrics endpoint (cmd/api/metrics.go)
+  metrics:
+    path: /metrics
+    serviceMonitor:
+      enabled: true
+      interval: 30s
   # Non-secret, environment-specific settings (e.g. FRONTEND_URL,
   # EXTERNAL_URL). Set per environment in deploy/app/values-<env>.yaml.
   env: {}

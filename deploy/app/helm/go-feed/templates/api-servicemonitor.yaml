@@ -1,0 +1,20 @@
+{{- if .Values.api.metrics.serviceMonitor.enabled }}
+# Tells Prometheus (kube-prometheus-stack, deploy/monitoring) to scrape
+# /metrics on every API pod via the API Service's "http" port.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Values.api.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.api.name }}
+    {{- include "gopher-feed.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.api.name }}
+  endpoints:
+    - port: http
+      path: {{ .Values.api.metrics.path }}
+      interval: {{ .Values.api.metrics.serviceMonitor.interval }}
+{{- end }}

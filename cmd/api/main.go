@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
 	"expvar"
 	"runtime"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -142,6 +142,9 @@ func main() {
 	expvar.Publish("goroutines", expvar.Func(func() any {
 		return runtime.NumGoroutine()
 	}))
+
+	// Prometheus metrics (served at /metrics)
+	registerRuntimeMetrics(db)
 
 	mux := app.mount()
 
