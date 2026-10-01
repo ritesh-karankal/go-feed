@@ -13,6 +13,7 @@ resources:
   - k8s/gateway/gateway-class.yaml
   - k8s/gateway/lbconfig.yaml
   - k8s/gateway/gateway.yaml
+  - argocd/argo-tg-config.yaml
   - k8s/external-secrets/cluster-secret-store-vault.yaml
   - k8s/external-secrets/external-secret.yaml
   - argocd/image-updater.yaml
