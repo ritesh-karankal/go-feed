@@ -1,0 +1,102 @@
+# kube-prometheus-stack values for the dev cluster.
+# Deployed by the "monitoring" Argo CD Application (deploy/bootstrap/monitoring.yaml).
+# Chart defaults: helm show values prometheus-community/kube-prometheus-stack --version <ver>
+
+crds:
+  enabled: true
+
+# EKS runs the control plane; these components can't be scraped and would
+# only produce false "...Down" alerts. EKS kube-proxy binds its metrics port
+# to localhost, so it can't be scraped either.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    retentionSize: 15GB
+    # Also pick up ServiceMonitors/PodMonitors/rules created outside this
+    # chart (e.g. for the go-feed API later), not just this release's.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ebs-gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+alertmanager:
+  alertmanagerSpec:
+    # Mounted at /etc/alertmanager/secrets/<name>/; synced from Vault by
+    # deploy/monitoring/manifests/external-secrets.yaml
+    secrets:
+      - alertmanager-slack-webhook
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ["namespace", "alertname"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: slack
+      routes:
+        # Watchdog always fires (dead man's switch); InfoInhibitor only
+        # suppresses info alerts. Neither should reach Slack.
+        - receiver: "null"
+          matchers:
+            - alertname =~ "Watchdog|InfoInhibitor"
+        # Info-level alerts (e.g. CPUThrottlingHigh) are too noisy for Slack
+        - receiver: "null"
+          matchers:
+            - severity = "info"
+    receivers:
+      - name: "null"
+      - name: slack
+        slack_configs:
+          # The webhook determines the channel; no URL in Git
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/slack-webhook-url
+            send_resolved: true
+    templates:
+      - /etc/alertmanager/config/*.tmpl
+
+grafana:
+  admin:
+    # Synced from Vault by deploy/monitoring/manifests/external-secrets.yaml
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  # Served on the shared ALB under /grafana (see manifests/grafana-httproute.yaml)
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      serve_from_sub_path: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi

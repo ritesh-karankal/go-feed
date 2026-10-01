@@ -1,0 +1,46 @@
+# Monitoring stack: kube-prometheus-stack (Prometheus, Alertmanager, Grafana)
+# plus the extra manifests in deploy/monitoring/manifests (secrets, route).
+# Apply once: kubectl apply -f deploy/bootstrap/monitoring.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 91.8.2
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/deploy/monitoring/kube-prometheus-stack-values.yaml
+    # Provides the values file ($values) and the extra manifests
+    - repoURL: https://github.com/ritesh-karankal/go-feed.git
+      targetRevision: HEAD
+      ref: values
+      path: deploy/monitoring/manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # The Prometheus operator CRDs exceed the client-side apply
+      # annotation size limit
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m

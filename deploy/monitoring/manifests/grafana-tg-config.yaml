@@ -1,0 +1,16 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: grafana-tg-config
+  namespace: monitoring
+spec:
+  targetReference:
+    name: kube-prometheus-stack-grafana
+  defaultConfiguration:
+    targetType: ip
+    # Grafana serves from /grafana; "/" is not a health endpoint
+    healthCheckConfig:
+      healthCheckPath: /grafana/api/health
+      healthCheckProtocol: HTTP
+      matcher:
+        httpCode: "200"
