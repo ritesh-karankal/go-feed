@@ -2,6 +2,8 @@ package main
 
 import (
 	"time"
+	"expvar"
+	"runtime"
 
 	"go.uber.org/zap"
 
@@ -131,6 +133,15 @@ func main() {
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
 	}
+
+	// Metrics collected
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
 	mux := app.mount()
 
