@@ -8,6 +8,7 @@ helmCharts:
     namespace: default
     valuesFile: helm/go-feed/values.yaml
 resources:
+  - storage/storageclass-gp3.yaml
   - gateway/gateway-class.yaml
   - gateway/lbconfig.yaml
   - gateway/gateway.yaml

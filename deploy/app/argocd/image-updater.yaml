@@ -15,3 +15,5 @@ spec:
           imageName: ghcr.io/ritesh-karankal/go-feed
         - alias: frontend
           imageName: ghcr.io/ritesh-karankal/go-feed-frontend
+        - alias: migrate
+          imageName: ghcr.io/ritesh-karankal/go-feed-migrate

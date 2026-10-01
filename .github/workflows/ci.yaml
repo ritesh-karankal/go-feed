@@ -11,6 +11,7 @@ on:
       - "go.sum"
       - "Dockerfile"
       - ".dockerignore"
+      - "cmd/migrate/**"
       - ".github/workflows/ci.yaml"
 
   pull_request:
@@ -21,6 +22,7 @@ on:
       - "go.sum"
       - "Dockerfile"
       - ".dockerignore"
+      - "cmd/migrate/**"
       - ".github/workflows/ci.yaml"
 
 permissions:
@@ -29,7 +31,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/go-feed
 
 jobs:
   test:
@@ -62,9 +63,23 @@ jobs:
         run: go test -race -count=1 ./...
 
   build-scan-push:
-    name: Build, Scan & Push
+    name: Build, Scan & Push (${{ matrix.image }})
     needs: test
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # API server
+          - image: go-feed
+            cmd: api
+          # Database migrations (embedded SQL files)
+          - image: go-feed-migrate
+            cmd: migrate
+
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
 
     steps:
       # ---------------------------------------------------
@@ -86,13 +101,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          build-args: |
+            CMD=${{ matrix.cmd }}
           push: false
           load: true
           tags: |
             ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
             ${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
       # ---------------------------------------------------
       # 4. Security scan with Trivy

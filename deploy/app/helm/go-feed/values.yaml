@@ -28,6 +28,43 @@ api:
     initialDelaySeconds: 5
     periodSeconds: 10
 
+# Database migrations, run as an init container of the API
+migrate:
+  image:
+    repository: ghcr.io/ritesh-karankal/go-feed-migrate
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# In-cluster Postgres. When enabled, the API's DB_ADDR is overridden to
+# point at this instance (password from POSTGRES_PASSWORD in the secret).
+postgres:
+  enabled: true
+  name: go-feed-postgres
+  image: postgres:16.15-alpine
+  port: 5432
+  database: socialnetwork
+  user: admin
+  passwordSecret:
+    name: go-feed-secrets
+    key: POSTGRES_PASSWORD
+  storage:
+    storageClassName: ebs-gp3
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
 frontend:
   name: go-feed-frontend
   replicaCount: 2
