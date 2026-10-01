@@ -1,4 +1,4 @@
-name: Frontend CI — Build, Scan & Push
+name: Frontend CI - Build, Scan & Push
 
 on:
   workflow_dispatch:
