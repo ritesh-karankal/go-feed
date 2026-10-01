@@ -1,10 +1,21 @@
 apiVersion: gateway.k8s.aws/v1beta1
 kind: TargetGroupConfiguration
 metadata:
-  name: app-tg-config
+  name: frontend-tg-config
   namespace: default
 spec:
   targetReference:
     name: go-feed-frontend
+  defaultConfiguration:
+    targetType: ip
+---
+apiVersion: gateway.k8s.aws/v1beta1
+kind: TargetGroupConfiguration
+metadata:
+  name: backend-tg-config
+  namespace: default
+spec:
+  targetReference:
+    name: go-feed
   defaultConfiguration:
     targetType: ip
