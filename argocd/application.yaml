@@ -10,14 +10,10 @@ spec:
   project: default
 
   source:
-    # Your GitHub repository containing k8s manifests
+    # Root Kustomize source renders the Helm chart and platform resources.
     repoURL: https://github.com/ritesh-karankal/go-feed.git
     targetRevision: HEAD
-    # Path to your Kubernetes manifests directory
-    path: k8s
-    # Recursively include all subdirectories (k8s/app/, k8s/gateway/, k8s/external-secrets/)
-    directory:
-      recurse: true
+    path: .
 
   destination:
     server: https://kubernetes.default.svc

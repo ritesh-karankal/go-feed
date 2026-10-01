@@ -1,6 +1,6 @@
 ## Argo CD configuration for gopher-feed
 ## Adapted argocd-values-9.4.0.yaml
-## Key differences: no domain/TLS, uses ALB Gateway HTTP only
+## Uses a shared HTTP-only ALB Gateway and a path prefix for the Argo CD UI.
 
 nameOverride: argocd
 fullnameOverride: ""
@@ -9,8 +9,9 @@ crds:
   install: true
   keep: true
 
-global:
-  domain: argocd.example.com   # Not used (no domain), kept for reference
+# Add a DNS name here after registering/configuring a domain.
+# global:
+#   domain: gofeed-demo.duckdns.org
 
 configs:
   cm:
@@ -22,8 +23,10 @@ configs:
 
   params:
     create: true
-    # Run ArgoCD server in insecure mode since TLS is terminated at ALB
+    # HTTP-only access; Argo CD serves behind the ALB at /argocd.
     server.insecure: true
+    server.rootpath: /argocd
+    server.basehref: /argocd
 
   rbac:
     create: true
@@ -35,13 +38,16 @@ server:
   # Expose ArgoCD UI via Gateway API HTTPRoute (no Ingress needed)
   httproute:
     enabled: true
+    # Add hostnames after a domain is configured; without this, the route
+    # matches the Gateway's generated ALB hostname over HTTP.
+    # hostnames:
+    #   - gofeed-demo.duckdns.org
     parentRefs:
       - name: go-feed-gateway
         namespace: default
         sectionName: http
-    # No hostname since we have no domain — ALB DNS name is used directly
     rules:
       - matches:
           - path:
               type: PathPrefix
-              value: /
+              value: /argocd

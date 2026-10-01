@@ -1,0 +1,16 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: gopher-feed-image-updater
+  namespace: argocd
+spec:
+  applicationRefs:
+    - namePattern: "go-feed"
+      commonUpdateSettings:
+        updateStrategy: newest-build
+        allowTags: "regexp:^sha-[a-f0-9]{7,40}$"
+      images:
+        - alias: backend
+          imageName: ghcr.io/ritesh-karankal/go-feed:latest
+        - alias: frontend
+          imageName: ghcr.io/ritesh-karankal/go-feed-frontend:latest
