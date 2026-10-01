@@ -94,6 +94,9 @@ grafana:
     server:
       root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
       serve_from_sub_path: true
+  # With the sub path, Grafana's own metrics move to /grafana/metrics
+  serviceMonitor:
+    path: /grafana/metrics
   resources:
     requests:
       cpu: 50m
