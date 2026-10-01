@@ -18,10 +18,11 @@ spec:
         namespaces:
           from: All
 
-  # Uncomment when you have a domain + ACM cert:
+  # Uncomment when domain + ACM cert is ready:
   # - name: https
   #   protocol: HTTPS
   #   port: 443
+  #   hostname: "gofeed-demo.eu.org"
   #   allowedRoutes:
   #     namespaces:
   #       from: All

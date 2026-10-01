@@ -4,11 +4,9 @@ metadata:
   name: go-feed-lbconfig
   namespace: default
 spec:
-  # internet-facing = public ALB reachable from the internet.
-  # Change to "internal" if you only need VPC-internal access.
   scheme: internet-facing
 
-  # Uncomment and add your ACM certificate ARN when you have a domain:
+  # Uncomment when ACM certificate/domain is ready:
   # listenerConfigurations:
   #   - protocolPort: HTTPS:443
-  #     defaultCertificate: arn:aws:acm:us-east-1:<account-id>:certificate/<cert-id>
+  #     defaultCertificate: arn:aws:acm:us-east-1:643681121226:certificate/851d88a0-55ea-41e8-94b0-055c408d4c49
