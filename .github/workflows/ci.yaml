@@ -11,7 +11,7 @@ on:
       - "go.sum"
       - "Dockerfile"
       - ".dockerignore"
-      - ".github/workflows/**"
+      - ".github/workflows/ci.yaml"
 
   pull_request:
     branches: [main]
@@ -21,7 +21,7 @@ on:
       - "go.sum"
       - "Dockerfile"
       - ".dockerignore"
-      - ".github/workflows/**"
+      - ".github/workflows/ci.yaml"
 
 permissions:
   contents: read
@@ -32,8 +32,38 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/go-feed
 
 jobs:
+  test:
+    name: Vet & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l cmd internal scripts)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Go test
+        run: go test -race -count=1 ./...
+
   build-scan-push:
     name: Build, Scan & Push
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
