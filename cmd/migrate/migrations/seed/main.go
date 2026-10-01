@@ -20,5 +20,7 @@ func main() {
 
 	store := store.NewStorage(conn)
 
-	db.Seed(store, conn)
+	if err := db.Seed(store, conn); err != nil {
+		log.Fatal(err)
+	}
 }

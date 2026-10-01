@@ -79,40 +79,74 @@ var comments = []string{
 	"Thanks for the information, very useful.",
 }
 
-func Seed(store store.Storage, db *sql.DB) {
+// SeedPassword is the password of every seeded user (dev data only).
+const SeedPassword = "password"
+
+// Seed fills the database with sample users, posts and comments. It does
+// nothing if the sample data already exists, so it is safe to run repeatedly.
+func Seed(store store.Storage, db *sql.DB) error {
 	ctx := context.Background()
 
-	users := generateUsers(100)
-	tx, _ := db.BeginTx(ctx, nil)
+	var seeded bool
+	if err := db.QueryRowContext(ctx,
+		`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`,
+		usernames[0]+"0",
+	).Scan(&seeded); err != nil {
+		return fmt.Errorf("checking for existing seed data: %w", err)
+	}
+	if seeded {
+		log.Println("Seed data already present, skipping")
+		return nil
+	}
+
+	users, err := generateUsers(100)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
 
 	for _, user := range users {
 		if err := store.Users.Create(ctx, tx, user); err != nil {
 			_ = tx.Rollback()
-			log.Println("Error creating user:", err)
-			return
+			return fmt.Errorf("creating user %s: %w", user.Username, err)
 		}
+
+		// Seeded users skip email activation
+		if _, err := tx.ExecContext(ctx, `UPDATE users SET is_active = true WHERE id = $1`, user.ID); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("activating user %s: %w", user.Username, err)
+		}
+	}
+
+	// Commit before creating posts: they are inserted outside this
+	// transaction and must see the users
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("committing users: %w", err)
 	}
 
 	posts := generatePosts(200, users)
 	for _, post := range posts {
 		if err := store.Posts.Create(ctx, post); err != nil {
-			log.Println("Error creating post:", err)
-			return
+			return fmt.Errorf("creating post: %w", err)
 		}
 	}
 
 	comments := generateComments(500, users, posts)
 	for _, comment := range comments {
 		if err := store.Comments.Create(ctx, comment); err != nil {
-			log.Println("Error creating comment:", err)
-			return
+			return fmt.Errorf("creating comment: %w", err)
 		}
 	}
 
-	log.Println("Seeding complete")
+	log.Printf("Seeding complete: %d users, %d posts, %d comments", len(users), len(posts), len(comments))
+	return nil
 }
 
-func generateUsers(num int) []*store.User {
+func generateUsers(num int) ([]*store.User, error) {
 	users := make([]*store.User, num)
 
 	for i := 0; i < num; i++ {
@@ -125,7 +159,15 @@ func generateUsers(num int) []*store.User {
 		}
 	}
 
-	return users
+	// Hash once (bcrypt is deliberately slow) and share it across users
+	if err := users[0].Password.Set(SeedPassword); err != nil {
+		return nil, err
+	}
+	for _, user := range users[1:] {
+		user.Password = users[0].Password
+	}
+
+	return users, nil
 }
 
 func generatePosts(num int, users []*store.User) []*store.Post {

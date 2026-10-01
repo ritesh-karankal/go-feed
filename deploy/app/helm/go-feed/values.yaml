@@ -60,6 +60,11 @@ migrate:
       cpu: 200m
       memory: 128Mi
 
+# Sample data (users, posts, comments) via a post-sync Job. Dev only; every
+# seeded user's password is "password". Enable per environment.
+seed:
+  enabled: false
+
 # In-cluster Postgres. When enabled, the API's DB_ADDR is overridden to
 # point at this instance (password from POSTGRES_PASSWORD in the secret).
 postgres:

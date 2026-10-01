@@ -9,3 +9,7 @@ api:
     FRONTEND_URL: http://k8s-default-gofeedga-c4ee543c1c-1894262950.us-east-1.elb.amazonaws.com
     # Public API host (no scheme), used by the Swagger docs
     EXTERNAL_URL: k8s-default-gofeedga-c4ee543c1c-1894262950.us-east-1.elb.amazonaws.com
+
+# Load sample users/posts/comments (password for all seeded users: "password")
+seed:
+  enabled: true
