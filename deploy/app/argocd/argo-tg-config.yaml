@@ -8,3 +8,9 @@ spec:
     name: argo-cd-argocd-server
   defaultConfiguration:
     targetType: ip
+    # Argo CD is served under server.rootpath=/argocd; "/" is not a health endpoint
+    healthCheckConfig:
+      healthCheckPath: /argocd/healthz
+      healthCheckProtocol: HTTP
+      matcher:
+        httpCode: "200"
