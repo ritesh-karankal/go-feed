@@ -1,0 +1,46 @@
+# Logging stack: Elasticsearch + Kibana + Filebeat (eck-stack chart) plus the
+# extra manifests in deploy/logging/manifests (Kibana route).
+# Needs the ECK operator first (eck-operator.yaml). Apply once:
+#   kubectl apply -f deploy/bootstrap/logging.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: logging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://helm.elastic.co
+      chart: eck-stack
+      targetRevision: 0.20.0
+      helm:
+        releaseName: eck-stack
+        valueFiles:
+          - $values/deploy/logging/eck-stack-values.yaml
+    # Provides the values file ($values) and the extra manifests
+    - repoURL: https://github.com/ritesh-karankal/go-feed.git
+      targetRevision: HEAD
+      ref: values
+      path: deploy/logging/manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Don't fail the dry run while the operator's CRDs are still installing
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m

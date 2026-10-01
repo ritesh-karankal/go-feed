@@ -1,0 +1,176 @@
+# eck-stack values (Elasticsearch + Kibana + Filebeat) for the dev cluster.
+# Deployed by the "logging" Argo CD Application (deploy/bootstrap/logging.yaml).
+# Requires the ECK operator (deploy/bootstrap/eck-operator.yaml).
+# Chart defaults: helm show values elastic/eck-stack --version <ver>
+
+# ------------------------------------------------------------------
+# Elasticsearch: single node, log store
+# ------------------------------------------------------------------
+eck-elasticsearch:
+  fullnameOverride: elasticsearch
+  version: 9.5.0
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        # Avoids needing vm.max_map_count on the nodes
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  memory: 2Gi
+      volumeClaimTemplates:
+        # ECK requires this exact claim name
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: ebs-gp3
+            resources:
+              requests:
+                storage: 20Gi
+
+# ------------------------------------------------------------------
+# Kibana: UI, served on the shared ALB under /kibana
+# (see manifests/kibana-httproute.yaml)
+# ------------------------------------------------------------------
+eck-kibana:
+  fullnameOverride: kibana
+  version: 9.5.0
+  elasticsearchRef:
+    name: elasticsearch
+  config:
+    server.basePath: /kibana
+    server.rewriteBasePath: true
+  http:
+    tls:
+      # The ALB terminates client traffic over HTTP; plain HTTP to the pod
+      # keeps the target group simple
+      selfSignedCertificate:
+        disabled: true
+  podTemplate:
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+          # Default probe targets /login; with the base path it moves
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /kibana/login
+              port: 5601
+
+# ------------------------------------------------------------------
+# Filebeat: DaemonSet shipping every container's logs
+# ------------------------------------------------------------------
+eck-beats:
+  enabled: true
+  fullnameOverride: filebeat
+  version: 9.5.0
+  type: filebeat
+  elasticsearchRef:
+    name: elasticsearch
+
+  config:
+    filebeat:
+      autodiscover:
+        providers:
+          - type: kubernetes
+            node: ${NODE_NAME}
+            hints:
+              enabled: true
+              default_config:
+                type: filestream
+                id: kubernetes-container-logs-${data.kubernetes.pod.name}-${data.kubernetes.container.id}
+                paths:
+                  - /var/log/containers/*${data.kubernetes.container.id}.log
+                parsers:
+                  - container: {}
+                prospector:
+                  scanner:
+                    fingerprint.enabled: true
+                    symlinks: true
+                file_identity.fingerprint: {}
+    processors:
+      - add_cloud_metadata: {}
+      - add_host_metadata: {}
+    # Single Elasticsearch node: replicas can never be allocated, which
+    # would leave the cluster yellow
+    setup.template.settings:
+      index.number_of_replicas: 0
+
+  daemonSet:
+    podTemplate:
+      spec:
+        serviceAccountName: filebeat
+        automountServiceAccountToken: true
+        terminationGracePeriodSeconds: 30
+        containers:
+          - name: filebeat
+            securityContext:
+              # Needs root to read the node's container log files
+              runAsUser: 0
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+            resources:
+              requests:
+                cpu: 100m
+                memory: 200Mi
+              limits:
+                memory: 400Mi
+            volumeMounts:
+              - name: varlogcontainers
+                mountPath: /var/log/containers
+              - name: varlogpods
+                mountPath: /var/log/pods
+        # EKS AL2023 nodes use containerd: logs live under /var/log only
+        volumes:
+          - name: varlogcontainers
+            hostPath:
+              path: /var/log/containers
+              type: Directory
+          - name: varlogpods
+            hostPath:
+              path: /var/log/pods
+              type: Directory
+
+  serviceAccount:
+    name: filebeat
+
+  clusterRole:
+    name: filebeat-autodiscover
+    rules:
+      - apiGroups: [""]
+        resources: ["events", "pods", "namespaces", "nodes"]
+        verbs: ["get", "watch", "list"]
+      - apiGroups: ["apps"]
+        resources: ["replicasets"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: ["batch"]
+        resources: ["jobs"]
+        verbs: ["get", "list", "watch"]
+
+  clusterRoleBinding:
+    name: filebeat-autodiscover
+    subjects:
+      - kind: ServiceAccount
+        name: filebeat
+        namespace: logging
+    roleRef:
+      kind: ClusterRole
+      name: filebeat-autodiscover
+      apiGroup: rbac.authorization.k8s.io

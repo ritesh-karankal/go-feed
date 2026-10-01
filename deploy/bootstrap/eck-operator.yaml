@@ -1,0 +1,38 @@
+# ECK operator: manages the Elasticsearch, Kibana and Beat resources of the
+# "logging" Application. Apply once, before logging.yaml:
+#   kubectl apply -f deploy/bootstrap/eck-operator.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eck-operator
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://helm.elastic.co
+    chart: eck-operator
+    targetRevision: 3.5.0
+    helm:
+      releaseName: eck-operator
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # The ECK CRDs exceed the client-side apply annotation size limit
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m

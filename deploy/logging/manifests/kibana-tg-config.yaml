@@ -1,0 +1,16 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: kibana-tg-config
+  namespace: logging
+spec:
+  targetReference:
+    name: kibana-kb-http
+  defaultConfiguration:
+    targetType: ip
+    # Kibana serves from /kibana; the login page is public and returns 200
+    healthCheckConfig:
+      healthCheckPath: /kibana/login
+      healthCheckProtocol: HTTP
+      matcher:
+        httpCode: "200"
