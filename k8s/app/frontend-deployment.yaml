@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-feed-frontend
+  namespace: default
+  labels:
+    app: go-feed-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: go-feed-frontend
+  template:
+    metadata:
+      labels:
+        app: go-feed-frontend
+    spec:
+      containers:
+        - name: go-feed-frontend
+          image: ghcr.io/ritesh-karankal/go-feed-frontend:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      imagePullSecrets:
+        - name: ghcr-secret
