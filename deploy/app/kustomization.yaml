@@ -7,6 +7,9 @@ helmCharts:
     releaseName: go-feed
     namespace: default
     valuesFile: helm/go-feed/values.yaml
+    # Environment-specific overrides on top of the chart defaults
+    additionalValuesFiles:
+      - values-dev.yaml
 resources:
   - storage/storageclass-gp3.yaml
   - gateway/gateway-class.yaml

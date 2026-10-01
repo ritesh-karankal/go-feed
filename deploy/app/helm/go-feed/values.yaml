@@ -12,6 +12,9 @@ api:
     port: 8080
     targetPort: 8080
   envFromSecret: go-feed-secrets
+  # Non-secret, environment-specific settings (e.g. FRONTEND_URL,
+  # EXTERNAL_URL). Set per environment in deploy/app/values-<env>.yaml.
+  env: {}
   resources:
     requests:
       cpu: 100m

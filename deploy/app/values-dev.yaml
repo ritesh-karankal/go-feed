@@ -1,0 +1,11 @@
+# Dev environment overrides for the go-feed chart.
+#
+# Public URL is currently the ALB's generated hostname (HTTP only). Replace
+# with the real domain (https://...) once DNS + ACM are set up; the ALB
+# hostname changes if the Gateway is recreated.
+api:
+  env:
+    # Base URL for links in emails (e.g. /confirm/<token>)
+    FRONTEND_URL: http://k8s-default-gofeedga-c4ee543c1c-1894262950.us-east-1.elb.amazonaws.com
+    # Public API host (no scheme), used by the Swagger docs
+    EXTERNAL_URL: k8s-default-gofeedga-c4ee543c1c-1894262950.us-east-1.elb.amazonaws.com
