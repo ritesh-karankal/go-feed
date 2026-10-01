@@ -58,6 +58,7 @@ spec:
           # Explicit env overrides the same keys from envFrom
           env:
             {{- include "gopher-feed.dbAddrEnv" . | nindent 12 }}
+            {{- include "gopher-feed.redisEnv" . | nindent 12 }}
             {{- range $name, $value := .Values.api.env }}
             - name: {{ $name }}
               value: {{ $value | quote }}

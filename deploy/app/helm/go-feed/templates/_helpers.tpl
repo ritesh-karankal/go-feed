@@ -15,3 +15,17 @@ envFrom secret. The password must be URL-safe.
   value: "postgres://{{ .Values.postgres.user }}:$(POSTGRES_PASSWORD)@{{ .Values.postgres.name }}:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?sslmode=disable"
 {{- end }}
 {{- end -}}
+
+
+{{/*
+Redis settings for the API when the in-cluster Redis is enabled. Overrides
+REDIS_ADDR/REDIS_ENABLED from the secret; REDIS_PW still comes from it.
+*/}}
+{{- define "gopher-feed.redisEnv" -}}
+{{- if .Values.redis.enabled }}
+- name: REDIS_ADDR
+  value: "{{ .Values.redis.name }}:{{ .Values.redis.port }}"
+- name: REDIS_ENABLED
+  value: "true"
+{{- end }}
+{{- end -}}

@@ -1,0 +1,19 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.redis.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.redis.name }}
+    {{- include "gopher-feed.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ .Values.redis.name }}
+  ports:
+    - name: redis
+      protocol: TCP
+      port: {{ .Values.redis.port }}
+      targetPort: redis
+{{- end }}

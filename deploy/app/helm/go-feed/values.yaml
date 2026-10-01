@@ -83,6 +83,25 @@ postgres:
       cpu: 500m
       memory: 512Mi
 
+# In-cluster Redis cache. When enabled, the API's REDIS_ADDR/REDIS_ENABLED
+# are set to use it (password from REDIS_PW in the secret).
+redis:
+  enabled: true
+  name: go-feed-redis
+  image: redis:8.10.2-alpine
+  port: 6379
+  # Evicts least-recently-used keys at this size (cache only)
+  maxMemory: 100mb
+  passwordSecret:
+    name: go-feed-secrets
+    key: REDIS_PW
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+
 frontend:
   name: go-feed-frontend
   # Used only when autoscaling is disabled
