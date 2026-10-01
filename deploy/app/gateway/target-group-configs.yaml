@@ -19,3 +19,9 @@ spec:
     name: go-feed
   defaultConfiguration:
     targetType: ip
+    # The API only serves /v1/*; the default "/" health check gets a 404
+    healthCheckConfig:
+      healthCheckPath: /v1/health
+      healthCheckProtocol: HTTP
+      matcher:
+        httpCode: "200"
