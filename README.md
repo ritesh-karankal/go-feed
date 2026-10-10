@@ -5,6 +5,8 @@
 
 A Go + React social feed, running on a private Amazon EKS cluster built with Terraform and deployed entirely through GitOps. A merged pull request is tested, built, vulnerability-scanned, pushed to GHCR and rolled out by Argo CD without anyone touching the cluster. The platform includes secrets management with Vault, automatic database migrations, Prometheus metrics and Slack alerts, centralized logging with the Elastic stack, and CPU-based autoscaling.
 
+![GoFeed home feed with seeded posts, served through the ALB](docs/images/app-feed.png)
+
 ---
 
 ## Highlights
@@ -224,9 +226,90 @@ Load test with [k6](https://k6.io): 300 virtual users for 5 minutes against the 
 
 ---
 
+## Screenshots
+
+Captured from the running dev environment (since torn down). Personal details are redacted.
+
+### The application
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/app-login.png" alt="GoFeed login page"/><br/><sub>Login page (React, served by nginx)</sub></td>
+    <td width="50%"><img src="docs/images/app-profile.png" alt="GoFeed profile page"/><br/><sub>Profile page with posts, followers and following</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/images/swagger.png" alt="GoFeed API Swagger documentation"/><br/><sub>REST API documentation (Swagger), served by the Go API under <code>/v1/swagger</code></sub></td>
+  </tr>
+</table>
+
+### GitOps: Argo CD
+
+![Argo CD application tree for go-feed: Synced and Healthy](docs/images/argocd-app-tree.png)
+<sub>The `go-feed` Application, **Synced** and **Healthy**: Services, Deployments with their ReplicaSet history (one per image rollout from Image Updater), the Postgres StatefulSet and its volume claim.</sub>
+
+### Autoscaling under load
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/hpa-scale-up-down.png" alt="kubectl watch of the frontend HPA scaling 2 to 5 and back"/><br/><sub><code>kubectl get hpa -w</code> during the k6 test: CPU climbs to 214% of the 70% target, replicas 2 → 4 → 5, then back to 2 after the 5-minute stabilization window</sub></td>
+    <td width="50%"><img src="docs/images/pods-scale-up.png" alt="frontend pods being created during scale-up"/><br/><sub>New frontend pods going Pending → ContainerCreating → Running in about 13 seconds each</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/images/pods-scale-down.png" alt="frontend pods terminating during scale-down"/><br/><sub>Scale-down: surplus pods terminate once load is gone</sub></td>
+  </tr>
+</table>
+
+### Monitoring: Grafana and Prometheus
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/grafana-cluster.png" alt="Grafana Kubernetes cluster compute resources dashboard"/><br/><sub>Cluster CPU and memory by namespace (the spike is the logging stack starting)</sub></td>
+    <td width="50%"><img src="docs/images/grafana-api-metrics.png" alt="Grafana metrics drilldown for the go-feed job"/><br/><sub>Metrics Drilldown filtered to <code>job = go-feed</code>: the API's own Go runtime metrics</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/grafana-explore-build-info.png" alt="Grafana Explore querying go-feed metrics"/><br/><sub>Explore: per-route request rates and <code>go_feed_build_info</code> per pod</sub></td>
+    <td width="50%"><img src="docs/images/grafana-node-exporter.png" alt="Grafana node exporter dashboard"/><br/><sub>Node Exporter: CPU, load and memory of an EKS node</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary>More: per-node pod usage</summary>
+
+![Grafana compute resources by node and pod](docs/images/grafana-node-pods.png)
+
+</details>
+
+### Alerting: Slack
+
+![Alertmanager notifications in Slack](docs/images/slack-alerts.png)
+<sub>Alertmanager posting to Slack: a test alert, then real alerts (Grafana `TargetDown` after moving it to a sub-path, `KubeCPUOvercommit`, `KubeAggregatedAPIDown` while metrics-server started), each followed by its RESOLVED notice.</sub>
+
+### Logging: Kibana
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/kibana-namespaces.png" alt="Kibana top values of kubernetes.namespace"/><br/><sub>Log volume by namespace: Filebeat ships logs from every namespace</sub></td>
+    <td width="50%"><img src="docs/images/kibana-api-logs.png" alt="Kibana filtered to the go-feed API container"/><br/><sub>API logs only: <code>kubernetes.container.name: go-feed</code></sub></td>
+  </tr>
+</table>
+
+<details>
+<summary>More Kibana views</summary>
+
+| | |
+| --- | --- |
+| ![Kibana default namespace logs](docs/images/kibana-default-logs.png) | ![Kibana frontend logs](docs/images/kibana-frontend-logs.png) |
+| `kubernetes.namespace: default` | `kubernetes.container.name: go-feed-frontend` |
+| ![Kibana argocd namespace logs](docs/images/kibana-argocd-logs.png) | |
+| `kubernetes.namespace: argocd` | |
+
+</details>
+
+---
+
 ## Problems solved along the way
 
-A selection; each one is a real incident from building this:
+A selection; each one is a real incident from building this. The full write-ups, with every command and its output, are in the **[incident journal](docs/journal.md)**.
 
 - **ALB kept routing `/` to the API** after a route was deleted. The controller logs showed `AccessDenied ... SetRulePriorities`: the controller's IAM policy predated v3.5.0. Diffed it against the official policy, added the two missing actions via Terraform.
 - **Load Balancer Controller crash-looping** because IMDSv2 hop limit 1 blocks pods from instance metadata (by design). Passed `vpcId` and `region` explicitly instead of weakening node security.
