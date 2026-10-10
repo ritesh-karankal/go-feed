@@ -309,7 +309,7 @@ Captured from the running dev environment (since torn down). Personal details ar
 
 ## Problems solved along the way
 
-A selection; each one is a real incident from building this. The full write-ups, with every command and its output, are in the **[incident journal](docs/journal.md)**.
+A selection; each one is a real incident from building this. The **[top 5 postmortems](docs/postmortem.md)** explain how I debugged each one, and the full write-ups, with every command and its output, are in the **[incident journal](docs/journal.md)**.
 
 - **ALB kept routing `/` to the API** after a route was deleted. The controller logs showed `AccessDenied ... SetRulePriorities`: the controller's IAM policy predated v3.5.0. Diffed it against the official policy, added the two missing actions via Terraform.
 - **Load Balancer Controller crash-looping** because IMDSv2 hop limit 1 blocks pods from instance metadata (by design). Passed `vpcId` and `region` explicitly instead of weakening node security.
